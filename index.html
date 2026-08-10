@@ -111,7 +111,7 @@
       padding: 10px 14px;
       font: inherit;
       font-weight: 700;
-      cursor: not-allowed;
+      cursor: pointer;
     }
 
     .primary {
@@ -157,6 +157,21 @@
     .answer-note {
       color: #6b7280;
       font-size: 0.95rem;
+    }
+
+    .message {
+      min-height: 1.5em;
+      margin-top: 10px;
+      color: #b45309;
+      font-weight: 700;
+    }
+
+    .draft-card[contenteditable="true"] {
+      outline: 2px solid transparent;
+    }
+
+    .draft-card[contenteditable="true"]:focus {
+      outline-color: #1f6f8b;
     }
 
     footer {
@@ -226,7 +241,7 @@
 
   <main>
     <div class="notice">
-      目前是 M0 骨架版：可以看流程與版面，還不會真正產生題目、登入或保存雲端紀錄。
+      目前是 M1 表單與本機保存版：可以輸入資料、產生可編輯示範題目，並暫存在同一台電腦。
     </div>
 
     <div class="layout">
@@ -234,10 +249,10 @@
         <section class="input-area">
           <h2>1. 輸入新聞素材</h2>
           <label for="source">媒體名稱與日期</label>
-          <input id="source" type="text" value="範例：中央社，2026/08/10" disabled>
+          <input id="source" type="text" placeholder="範例：中央社，2026/08/10">
 
           <label for="news">新聞內容</label>
-          <textarea id="news" disabled>這裡之後會讓老師貼上新聞內容，網站會協助改寫成自足的情境題幹。</textarea>
+          <textarea id="news" placeholder="請貼上新聞內容，或先用一段事件摘要測試。"></textarea>
         </section>
 
         <section class="input-area">
@@ -245,32 +260,39 @@
           <div class="form-grid">
             <div>
               <label for="type">題型</label>
-              <select id="type" disabled>
+              <select id="type">
                 <option>單選題與簡答題</option>
+                <option>單選題</option>
+                <option>簡答題</option>
               </select>
             </div>
             <div>
               <label for="count">題數</label>
-              <select id="count" disabled>
+              <select id="count">
+                <option>3 題</option>
                 <option>5 題</option>
+                <option>8 題</option>
               </select>
             </div>
             <div>
               <label for="level">難易度</label>
-              <select id="level" disabled>
+              <select id="level">
+                <option>基礎</option>
                 <option>普通</option>
+                <option>挑戰</option>
               </select>
             </div>
           </div>
           <div class="button-row">
-            <button class="primary" type="button" disabled>產生題目草稿</button>
-            <button class="secondary" type="button" disabled>列印 A4</button>
+            <button class="primary" id="generate" type="button">產生題目草稿</button>
+            <button class="secondary" id="print" type="button">列印 A4</button>
           </div>
+          <p class="message" id="message" role="status"></p>
         </section>
 
         <section class="draft-area">
           <h2>3. 題目草稿</h2>
-          <div class="draft-card">
+          <div class="draft-card" id="draft" contenteditable="true">
             <span class="tag">草稿</span>
             <p><strong>題目範例：</strong>根據新聞情境，請判斷下列哪一項最能說明事件的主要影響。</p>
             <p>A. 選項一　B. 選項二　C. 選項三　D. 選項四</p>
@@ -286,7 +308,7 @@
         <div class="print-page">
           <h3>時事題目練習單</h3>
           <p>班級：__________　姓名：__________　日期：__________</p>
-          <ol>
+          <ol id="print-list">
             <li>這裡會放第一題題目。</li>
             <li>這裡會放第二題題目。</li>
             <li>這裡會放第三題題目。</li>
@@ -298,7 +320,87 @@
   </main>
 
   <footer>
-    M0 驗收重點：能直接打開、看得到四個主要區塊、手機不橫向溢位、列印時只保留 A4 內容。
+    M1 驗收重點：表單可輸入、可產生示範題目、題目可修改、同一台電腦下次打開仍保留內容。
   </footer>
+
+  <script>
+    const storageKey = "newsQuizDraftV1";
+    const fields = ["source", "news", "type", "count", "level"];
+    const message = document.getElementById("message");
+    const draft = document.getElementById("draft");
+    const printList = document.getElementById("print-list");
+
+    function saveState() {
+      const data = { draft: draft.innerHTML };
+      fields.forEach((id) => {
+        data[id] = document.getElementById(id).value;
+      });
+      localStorage.setItem(storageKey, JSON.stringify(data));
+    }
+
+    function loadState() {
+      const saved = localStorage.getItem(storageKey);
+      if (!saved) return;
+      const data = JSON.parse(saved);
+      fields.forEach((id) => {
+        if (data[id]) document.getElementById(id).value = data[id];
+      });
+      if (data.draft) draft.innerHTML = data.draft;
+      updatePrintPreview();
+    }
+
+    function escapeHtml(text) {
+      return text
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function updatePrintPreview() {
+      const text = draft.innerText.trim();
+      const items = text ? text.split("\n").filter(Boolean).slice(0, 5) : ["這裡會放第一題題目。"];
+      printList.innerHTML = items.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
+    }
+
+    function generateDraft() {
+      const source = document.getElementById("source").value.trim() || "未填寫出處";
+      const news = document.getElementById("news").value.trim();
+      const type = document.getElementById("type").value;
+      const count = document.getElementById("count").value;
+      const level = document.getElementById("level").value;
+
+      if (!news) {
+        message.textContent = "請先貼上新聞內容，再產生題目草稿。";
+        return;
+      }
+
+      message.textContent = "已產生示範題目草稿，可以直接點文字修改。";
+      draft.innerHTML = `
+        <span class="tag">草稿</span>
+        <p><strong>出題規格：</strong>${type}，${count}，${level}難易度。</p>
+        <p><strong>題目範例：</strong>根據這則新聞情境，請說明事件可能對社會或公共生活造成的影響。</p>
+        <p><strong>作答提示：</strong>請引用新聞中的一個線索，並用自己的話說明理由。</p>
+        <p><strong>答案：</strong>這是示範答案，正式答案之後會由老師查核與修改。</p>
+        <p><strong>詳解：</strong>這份草稿會保留新聞重點，但老師仍要確認事實、時效、著作權、偏誤與答案唯一性。</p>
+        <p class="answer-note">出處提醒：${source}</p>
+      `;
+      updatePrintPreview();
+      saveState();
+    }
+
+    fields.forEach((id) => {
+      document.getElementById(id).addEventListener("input", saveState);
+      document.getElementById(id).addEventListener("change", saveState);
+    });
+    draft.addEventListener("input", () => {
+      updatePrintPreview();
+      saveState();
+    });
+    document.getElementById("generate").addEventListener("click", generateDraft);
+    document.getElementById("print").addEventListener("click", () => window.print());
+    loadState();
+  </script>
 </body>
 </html>
