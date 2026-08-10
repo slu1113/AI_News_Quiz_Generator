@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>時事命題網站</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: #1f2933;
+      font-family: "Microsoft JhengHei", "PingFang TC", Arial, sans-serif;
+      line-height: 1.6;
+      background: #f5f7fa;
+    }
+
+    header {
+      background: #19456b;
+      color: #fff;
+      padding: 24px 20px;
+    }
+
+    header h1 {
+      max-width: 1080px;
+      margin: 0 auto 8px;
+      font-size: clamp(1.6rem, 4vw, 2.25rem);
+      font-weight: 700;
+    }
+
+    header p {
+      max-width: 1080px;
+      margin: 0 auto;
+      color: #dce9f5;
+    }
+
+    main {
+      width: min(1080px, 100%);
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .notice {
+      border-left: 5px solid #d97706;
+      background: #fff7ed;
+      padding: 14px 16px;
+      margin-bottom: 18px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+      gap: 16px;
+      align-items: start;
+    }
+
+    section {
+      background: #fff;
+      border: 1px solid #d8dee8;
+      border-radius: 8px;
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      font-size: 1.25rem;
+    }
+
+    label {
+      display: block;
+      margin: 12px 0 6px;
+      font-weight: 700;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      border: 1px solid #bcc7d6;
+      border-radius: 6px;
+      padding: 10px;
+      font: inherit;
+      color: inherit;
+      background: #fff;
+    }
+
+    textarea {
+      min-height: 160px;
+      resize: vertical;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 6px;
+      padding: 10px 14px;
+      font: inherit;
+      font-weight: 700;
+      cursor: not-allowed;
+    }
+
+    .primary {
+      color: #fff;
+      background: #1f6f8b;
+    }
+
+    .secondary {
+      color: #19456b;
+      background: #dce9f5;
+    }
+
+    .draft-card {
+      border: 1px dashed #9aa8ba;
+      border-radius: 8px;
+      padding: 14px;
+      background: #fbfcfe;
+    }
+
+    .tag {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 3px 10px;
+      margin-bottom: 8px;
+      color: #92400e;
+      background: #fef3c7;
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+
+    .print-page {
+      min-height: 520px;
+      border: 1px solid #cbd5e1;
+      background: #fff;
+      padding: 18px;
+    }
+
+    .print-page h3 {
+      margin: 0 0 10px;
+      text-align: center;
+    }
+
+    .answer-note {
+      color: #6b7280;
+      font-size: 0.95rem;
+    }
+
+    footer {
+      width: min(1080px, 100%);
+      margin: 0 auto;
+      padding: 0 20px 28px;
+      color: #52616f;
+      font-size: 0.95rem;
+    }
+
+    @media (max-width: 760px) {
+      main {
+        padding: 14px;
+      }
+
+      .layout,
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      section {
+        padding: 14px;
+      }
+    }
+
+    @media print {
+      body {
+        background: #fff;
+      }
+
+      header,
+      .notice,
+      .input-area,
+      .draft-area,
+      footer {
+        display: none;
+      }
+
+      main {
+        width: 100%;
+        padding: 0;
+      }
+
+      .layout {
+        display: block;
+      }
+
+      section,
+      .print-page {
+        border: 0;
+        padding: 0;
+        margin: 0;
+      }
+
+      @page {
+        size: A4;
+        margin: 16mm;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>時事命題網站</h1>
+    <p>把新聞素材整理成課堂可用的題目草稿，最後由老師查核與決定。</p>
+  </header>
+
+  <main>
+    <div class="notice">
+      目前是 M0 骨架版：可以看流程與版面，還不會真正產生題目、登入或保存雲端紀錄。
+    </div>
+
+    <div class="layout">
+      <div>
+        <section class="input-area">
+          <h2>1. 輸入新聞素材</h2>
+          <label for="source">媒體名稱與日期</label>
+          <input id="source" type="text" value="範例：中央社，2026/08/10" disabled>
+
+          <label for="news">新聞內容</label>
+          <textarea id="news" disabled>這裡之後會讓老師貼上新聞內容，網站會協助改寫成自足的情境題幹。</textarea>
+        </section>
+
+        <section class="input-area">
+          <h2>2. 選擇出題規格</h2>
+          <div class="form-grid">
+            <div>
+              <label for="type">題型</label>
+              <select id="type" disabled>
+                <option>單選題與簡答題</option>
+              </select>
+            </div>
+            <div>
+              <label for="count">題數</label>
+              <select id="count" disabled>
+                <option>5 題</option>
+              </select>
+            </div>
+            <div>
+              <label for="level">難易度</label>
+              <select id="level" disabled>
+                <option>普通</option>
+              </select>
+            </div>
+          </div>
+          <div class="button-row">
+            <button class="primary" type="button" disabled>產生題目草稿</button>
+            <button class="secondary" type="button" disabled>列印 A4</button>
+          </div>
+        </section>
+
+        <section class="draft-area">
+          <h2>3. 題目草稿</h2>
+          <div class="draft-card">
+            <span class="tag">草稿</span>
+            <p><strong>題目範例：</strong>根據新聞情境，請判斷下列哪一項最能說明事件的主要影響。</p>
+            <p>A. 選項一　B. 選項二　C. 選項三　D. 選項四</p>
+            <p><strong>答案：</strong>之後由系統產生，老師查核後決定。</p>
+            <p><strong>詳解：</strong>這裡會放白話詳解，幫助老師確認題目是否適合課堂使用。</p>
+            <p class="answer-note">出處提醒：媒體名稱＋日期。請老師查核事實、時效、著作權、偏誤與答案唯一性。</p>
+          </div>
+        </section>
+      </div>
+
+      <section>
+        <h2>4. A4 列印預覽</h2>
+        <div class="print-page">
+          <h3>時事題目練習單</h3>
+          <p>班級：__________　姓名：__________　日期：__________</p>
+          <ol>
+            <li>這裡會放第一題題目。</li>
+            <li>這裡會放第二題題目。</li>
+            <li>這裡會放第三題題目。</li>
+          </ol>
+          <p class="answer-note">教師提醒：AI 產出的題目為草稿，使用前請老師自行查核。</p>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer>
+    M0 驗收重點：能直接打開、看得到四個主要區塊、手機不橫向溢位、列印時只保留 A4 內容。
+  </footer>
+</body>
+</html>
