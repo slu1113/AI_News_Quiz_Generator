@@ -174,6 +174,18 @@
       outline-color: #1f6f8b;
     }
 
+    .quiz-slot {
+      border-top: 1px solid #e5e7eb;
+      margin-top: 12px;
+      padding-top: 12px;
+    }
+
+    .quiz-slot:first-child {
+      border-top: 0;
+      margin-top: 0;
+      padding-top: 0;
+    }
+
     footer {
       width: min(1080px, 100%);
       margin: 0 auto;
@@ -241,7 +253,7 @@
 
   <main>
     <div class="notice">
-      目前是 M1 表單與本機保存版：可以輸入資料、產生可編輯示範題目，並暫存在同一台電腦。
+      目前是 M2 AI 出題測試版：金鑰不放在網頁裡，出題內容仍須老師逐題查核。
     </div>
 
     <div class="layout">
@@ -285,6 +297,7 @@
           </div>
           <div class="button-row">
             <button class="primary" id="generate" type="button">產生題目草稿</button>
+            <button class="primary" id="generate-ai" type="button">產生考題草稿</button>
             <button class="secondary" id="print" type="button">列印 A4</button>
           </div>
           <p class="message" id="message" role="status"></p>
@@ -293,12 +306,14 @@
         <section class="draft-area">
           <h2>3. 題目草稿</h2>
           <div class="draft-card" id="draft" contenteditable="true">
-            <span class="tag">草稿</span>
-            <p><strong>題目範例：</strong>根據新聞情境，請判斷下列哪一項最能說明事件的主要影響。</p>
-            <p>A. 選項一　B. 選項二　C. 選項三　D. 選項四</p>
-            <p><strong>答案：</strong>之後由系統產生，老師查核後決定。</p>
-            <p><strong>詳解：</strong>這裡會放白話詳解，幫助老師確認題目是否適合課堂使用。</p>
-            <p class="answer-note">出處提醒：媒體名稱＋日期。請老師查核事實、時效、著作權、偏誤與答案唯一性。</p>
+            <div class="quiz-slot" data-empty="true">
+              <span class="tag">草稿</span>
+              <p><strong>題目 1：</strong>這裡會填入第一題，老師也可以直接點文字修改。</p>
+              <p>A. ______　B. ______　C. ______　D. ______</p>
+              <p><strong>答案：</strong>待產生</p>
+              <p><strong>詳解：</strong>待產生</p>
+              <p class="answer-note">出處提醒：待填寫。請老師查核事實、時效、著作權、偏誤與答案唯一性。</p>
+            </div>
           </div>
         </section>
       </div>
@@ -364,6 +379,37 @@
       printList.innerHTML = items.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
     }
 
+    function buildQuestionHtml(item, index, source) {
+      const options = Array.isArray(item.options) ? item.options.slice(0, 4) : [];
+      while (options.length < 4) options.push("待補選項");
+      return `
+        <span class="tag">草稿</span>
+        <p><strong>題目 ${index}：</strong>${escapeHtml(item.question || "待補題目")}</p>
+        <p>A. ${escapeHtml(options[0])}　B. ${escapeHtml(options[1])}　C. ${escapeHtml(options[2])}　D. ${escapeHtml(options[3])}</p>
+        <p><strong>答案：</strong>${escapeHtml(item.answer || "待補答案")}</p>
+        <p><strong>詳解：</strong>${escapeHtml(item.explanation || "待補詳解")}</p>
+        <p class="answer-note">出處提醒：${escapeHtml(item.source || source)}。請老師查核事實、時效、著作權、偏誤與答案唯一性。</p>
+      `;
+    }
+
+    function makeEmptySlots(count) {
+      const currentSlots = Array.from(draft.querySelectorAll(".quiz-slot"));
+      for (let index = currentSlots.length + 1; index <= count; index += 1) {
+        const slot = document.createElement("div");
+        slot.className = "quiz-slot";
+        slot.dataset.empty = "true";
+        slot.innerHTML = `
+          <span class="tag">草稿</span>
+          <p><strong>題目 ${index}：</strong>待產生</p>
+          <p>A. ______　B. ______　C. ______　D. ______</p>
+          <p><strong>答案：</strong>待產生</p>
+          <p><strong>詳解：</strong>待產生</p>
+          <p class="answer-note">出處提醒：待填寫。請老師查核事實、時效、著作權、偏誤與答案唯一性。</p>
+        `;
+        draft.appendChild(slot);
+      }
+    }
+
     function generateDraft() {
       const source = document.getElementById("source").value.trim() || "未填寫出處";
       const news = document.getElementById("news").value.trim();
@@ -377,17 +423,66 @@
       }
 
       message.textContent = "已產生示範題目草稿，可以直接點文字修改。";
-      draft.innerHTML = `
-        <span class="tag">草稿</span>
-        <p><strong>出題規格：</strong>${type}，${count}，${level}難易度。</p>
-        <p><strong>題目範例：</strong>根據這則新聞情境，請說明事件可能對社會或公共生活造成的影響。</p>
-        <p><strong>作答提示：</strong>請引用新聞中的一個線索，並用自己的話說明理由。</p>
-        <p><strong>答案：</strong>這是示範答案，正式答案之後會由老師查核與修改。</p>
-        <p><strong>詳解：</strong>這份草稿會保留新聞重點，但老師仍要確認事實、時效、著作權、偏誤與答案唯一性。</p>
-        <p class="answer-note">出處提醒：${source}</p>
-      `;
+      draft.innerHTML = "";
+      makeEmptySlots(parseInt(count, 10) || 5);
+      draft.querySelector(".quiz-slot").innerHTML = buildQuestionHtml({
+        question: "根據這則新聞情境，請說明事件可能對社會或公共生活造成的影響。",
+        options: ["影響公共討論", "完全沒有影響", "只和娛樂有關", "無法從新聞判斷"],
+        answer: "A",
+        explanation: `這是示範答案，正式答案之後會由老師查核與修改。出題規格：${type}，${count}，${level}難易度。`,
+        source
+      }, 1, source);
+      draft.querySelector(".quiz-slot").dataset.empty = "false";
       updatePrintPreview();
       saveState();
+    }
+
+    async function generateAiDraft() {
+      const source = document.getElementById("source").value.trim() || "未填寫出處";
+      const news = document.getElementById("news").value.trim();
+      const type = document.getElementById("type").value;
+      const count = parseInt(document.getElementById("count").value, 10) || 5;
+      const level = document.getElementById("level").value;
+
+      if (!news) {
+        message.textContent = "請先貼上新聞內容，再產生考題草稿。";
+        return;
+      }
+
+      makeEmptySlots(count);
+      const emptySlots = Array.from(draft.querySelectorAll(".quiz-slot")).filter((slot) => slot.dataset.empty === "true");
+      if (!emptySlots.length) {
+        message.textContent = "目前沒有空白題格；為了避免覆蓋已填內容，沒有新增題目。";
+        return;
+      }
+
+      message.textContent = "正在產生考題草稿，請稍候。";
+      document.getElementById("generate-ai").disabled = true;
+
+      try {
+        const response = await fetch("/api/generate-quiz", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ source, news, type, count: emptySlots.length, level })
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.message || "產生失敗，請稍後再試。");
+
+        result.questions.slice(0, emptySlots.length).forEach((item, itemIndex) => {
+          const slot = emptySlots[itemIndex];
+          const questionNumber = Array.from(draft.querySelectorAll(".quiz-slot")).indexOf(slot) + 1;
+          slot.innerHTML = buildQuestionHtml(item, questionNumber, source);
+          slot.dataset.empty = "false";
+        });
+
+        message.textContent = "已產生考題草稿；請逐題查核事實、時效、著作權、偏誤與答案唯一性。";
+        updatePrintPreview();
+        saveState();
+      } catch (error) {
+        message.textContent = `產生考題失敗：${error.message || "請確認金鑰與網路後再試。"}`;
+      } finally {
+        document.getElementById("generate-ai").disabled = false;
+      }
     }
 
     fields.forEach((id) => {
@@ -399,6 +494,7 @@
       saveState();
     });
     document.getElementById("generate").addEventListener("click", generateDraft);
+    document.getElementById("generate-ai").addEventListener("click", generateAiDraft);
     document.getElementById("print").addEventListener("click", () => window.print());
     loadState();
   </script>
